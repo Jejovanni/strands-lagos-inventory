@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --color-coffee: #4A3B32;
+  --color-coffee-dark: #362A23;
+  --color-coffee-light: #5E4B41;
+  --color-salmon: #FF9E85;
+  --color-salmon-hover: #FF8A6E;
+  --color-sand: #FDFBF7;
+  --color-sand-dark: #F4F0E6;
+}
+
+body {
+  background-color: var(--color-sand);
+  color: var(--color-coffee);
+}
