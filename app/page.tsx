@@ -3,21 +3,18 @@
 import React, { useState } from 'react';
 import { Plus, Building2, Download } from 'lucide-react';
 
-// Root-level Components
+// Modularized Components from root /components
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import StatsOverview from '../components/StatsOverview';
 import ReportsView from '../components/ReportsView';
 import StockLogsView from '../components/StockLogsView';
 import InventoryTable from '../components/InventoryTable';
+import ManageUsers from '../components/ManageUsers';
+import ItemModal from '../components/ItemModal';
 
-// Centralized Types
-import {
-  ActiveTab,
-  InventoryItem,
-  StockLogEntry,
-  FilterType
-} from '../types';
+// Centralized Types from root /types.ts
+import { ActiveTab, InventoryItem, StockLogEntry, FilterType } from '../types';
 
 // --- Initial Data ---
 const initialInventory: InventoryItem[] = [
@@ -27,18 +24,34 @@ const initialInventory: InventoryItem[] = [
   { id: '4', name: 'Mink Body Wave Bundles', sku: 'BUN-MBW-03', type: 'bundle', quantity: 25, price: 35000, status: 'in-stock', warehouse: 'Lagos Main' },
 ];
 
-const initialLogs: StockLogEntry[] = [
-  { id: 'l1', itemId: '1', itemName: 'Brazilian Silk Straight', type: 'addition', amount: 5, previousQty: 7, newQty: 12, reason: 'Restock from Supplier', timestamp: '2023-10-24 14:30', user: 'Admin User' },
-];
-
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('inventory');
-  const [items] = useState<InventoryItem[]>(initialInventory);
-  const [logs] = useState<StockLogEntry[]>(initialLogs);
+  const [items, setItems] = useState<InventoryItem[]>(initialInventory);
+  const [logs] = useState<StockLogEntry[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [filterLocation, setFilterLocation] = useState<'all' | 'Lagos Main' | 'Ike Branch'>('all');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  const handleSaveItem = (data: Partial<InventoryItem>) => {
+    if (editingItem) {
+      setItems(items.map(item => item.id === editingItem.id ? { ...item, ...data } : item));
+    } else {
+      const newItem: InventoryItem = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: data.name!,
+        sku: data.sku!,
+        type: data.type!,
+        quantity: data.quantity || 0,
+        price: data.price || 0,
+        warehouse: data.warehouse || 'Lagos Main',
+        status: data.quantity! > 5 ? 'in-stock' : data.quantity! === 0 ? 'out-of-stock' : 'low-stock'
+      };
+      setItems([newItem, ...items]);
+    }
+  };
 
   const filteredItems = items.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -63,7 +76,6 @@ export default function App() {
 
         <div className="flex-1 overflow-y-auto p-4 md:p-8">
           <div className="max-w-7xl mx-auto">
-
             {activeTab === 'inventory' && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -73,7 +85,7 @@ export default function App() {
                   </div>
                   <div className="flex items-center gap-3">
                     <button className="flex items-center gap-2 bg-white border border-[#3D2B1F]/10 text-[#3D2B1F] px-5 py-3 rounded-xl text-sm font-bold shadow-sm hover:bg-[#F5F1ED] transition-all"><Download className="w-4 h-4" /> Export CSV</button>
-                    <button className="flex items-center gap-2 bg-[#3D2B1F] text-[#F5F1ED] px-6 py-3 rounded-xl font-medium shadow-lg hover:bg-[#3D2B1F]/90 transition-all"><Plus className="w-5 h-5" /> Add Item</button>
+                    <button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 bg-[#3D2B1F] text-[#F5F1ED] px-6 py-3 rounded-xl font-medium shadow-lg hover:bg-[#3D2B1F]/90 transition-all"><Plus className="w-5 h-5" /> Add Item</button>
                   </div>
                 </div>
 
@@ -100,19 +112,23 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-
-                  <InventoryTable items={filteredItems} onEdit={(item) => console.log('Edit', item)} />
+                  <InventoryTable items={filteredItems} onEdit={setEditingItem} />
                 </div>
               </div>
             )}
-
             {activeTab === 'logs' && <StockLogsView logs={logs} />}
             {activeTab === 'reports' && <ReportsView items={items} logs={logs} />}
-            {activeTab === 'team' && <div className="p-8 bg-white rounded-3xl border border-[#3D2B1F]/10 font-serif">Team Access View Coming Soon</div>}
-
+            {activeTab === 'team' && <ManageUsers />}
           </div>
         </div>
       </main>
+
+      <ItemModal
+        isOpen={isAddModalOpen || !!editingItem}
+        onClose={() => { setIsAddModalOpen(false); setEditingItem(null); }}
+        onSave={handleSaveItem}
+        initialData={editingItem || undefined}
+      />
     </div>
   );
 }
