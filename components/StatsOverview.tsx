@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { InventoryItem } from '@/app/page'; // We'll import the type from the main page
+import { InventoryItem } from '../types';
 
 interface StatsOverviewProps {
     items: InventoryItem[];

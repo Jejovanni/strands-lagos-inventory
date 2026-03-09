@@ -1,4 +1,4 @@
-import { FilterType } from '@/app/page';
+import { FilterType } from '../../types';
 
 interface CategoryFiltersProps {
     currentFilter: FilterType;

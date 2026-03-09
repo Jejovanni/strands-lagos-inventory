@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { ArrowUpRight } from 'lucide-react';
-import { InventoryItem, StockLogEntry } from '@/app/page';
+import { InventoryItem, StockLogEntry } from '../types';
 
 interface ReportsViewProps {
     items: InventoryItem[];
