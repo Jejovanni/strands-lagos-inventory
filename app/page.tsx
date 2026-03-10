@@ -1,6 +1,6 @@
 'use client';
-
-import React, { useState } from 'react';
+import { supabase } from '../lib/supabase';
+import React, { useState, useEffect } from 'react';
 import { Plus, Building2, Download } from 'lucide-react';
 
 // Modularized Components from root /components
@@ -26,7 +26,8 @@ const initialInventory: InventoryItem[] = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('inventory');
-  const [items, setItems] = useState<InventoryItem[]>(initialInventory);
+  const [items, setItems] = useState<InventoryItem[]>([]); // Start with empty array
+  const [loading, setLoading] = useState(true);
   const [logs] = useState<StockLogEntry[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
@@ -35,21 +36,88 @@ export default function App() {
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  const handleSaveItem = (data: Partial<InventoryItem>) => {
-    if (editingItem) {
-      setItems(items.map(item => item.id === editingItem.id ? { ...item, ...data } : item));
+  // 1. Create the fetch function
+  const fetchInventory = async () => {
+    setLoading(true);
+
+    // 1. Start the query
+    let query = supabase
+      .from('products')
+      .select('*')
+      .order('name', { ascending: true });
+
+    // 2. Apply Search Filter (if text exists)
+    if (searchQuery) {
+      // This searches both Name and SKU at the same time
+      query = query.or(`name.ilike.%${searchQuery}%,sku.ilike.%${searchQuery}%`);
+    }
+
+    // 3. Apply Category Filter (Wig vs Bundle)
+    if (filterType !== 'all') {
+      query = query.eq('type', filterType);
+    }
+
+    // 4. Apply Location Filter
+    if (filterLocation !== 'all') {
+      query = query.eq('warehouse', filterLocation);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching inventory:', error);
     } else {
-      const newItem: InventoryItem = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: data.name!,
-        sku: data.sku!,
-        type: data.type!,
-        quantity: data.quantity || 0,
-        price: data.price || 0,
-        warehouse: data.warehouse || 'Lagos Main',
-        status: data.quantity! > 5 ? 'in-stock' : data.quantity! === 0 ? 'out-of-stock' : 'low-stock'
-      };
-      setItems([newItem, ...items]);
+      setItems(data as InventoryItem[]);
+    }
+    setLoading(false);
+  };
+
+  // 2. Trigger fetch on mount
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      fetchInventory();
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [searchQuery, filterType, filterLocation]);
+
+  const handleSaveItem = async (data: Partial<InventoryItem> & { logReason?: string }) => {
+    if (editingItem) {
+      // 1. Set the reason in the database session first
+      if (data.logReason) {
+        await supabase.rpc('set_log_reason', { reason: data.logReason });
+      }
+
+      // 2. Perform the actual update
+      const { error } = await supabase
+        .from('products')
+        .update({
+          name: data.name,
+          sku: data.sku,
+          type: data.type,
+          quantity: data.quantity,
+          price: data.price,
+          warehouse: data.warehouse
+        })
+        .eq('id', editingItem.id);
+
+      if (!error) {
+        fetchInventory();
+        setEditingItem(null);
+      }
+    } else {
+      // Logic for New Item (Insertion)
+      const { error } = await supabase
+        .from('products')
+        .insert([{
+          ...data,
+          status: (data.quantity || 0) > 5 ? 'in-stock' : 'low-stock'
+        }]);
+
+      if (!error) {
+        fetchInventory();
+        setIsAddModalOpen(false);
+      }
     }
   };
 
@@ -112,11 +180,11 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-                  <InventoryTable items={filteredItems} onEdit={setEditingItem} />
+                  <InventoryTable items={items} onEdit={setEditingItem} />
                 </div>
               </div>
             )}
-            {activeTab === 'logs' && <StockLogsView logs={logs} />}
+            {activeTab === 'logs' && <StockLogsView />}
             {activeTab === 'reports' && <ReportsView items={items} logs={logs} />}
             {activeTab === 'team' && <ManageUsers />}
           </div>

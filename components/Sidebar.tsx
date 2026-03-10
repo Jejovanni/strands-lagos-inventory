@@ -11,6 +11,7 @@ import {
     ChevronRight,
     LogOut
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 // Define the tab type here so the Sidebar knows what it's handling
 export type ActiveTab = 'inventory' | 'team' | 'logs' | 'reports';
@@ -21,6 +22,10 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
+    const handleSignOut = async () => {
+        const { error } = await supabase.auth.signOut();
+        if (!error) window.location.href = '/login';
+    };
     const [isOpen, setIsOpen] = useState(true);
 
     const menuItems = [
@@ -75,7 +80,10 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                 </nav>
 
                 <div className="p-6 border-t border-[#3D2B1F]/5">
-                    <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-[#3D2B1F]/40 hover:text-red-500 transition-colors">
+                    <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-[#3D2B1F]/40 hover:text-red-500 transition-colors"
+                    >
                         <LogOut className="w-5 h-5" />
                         <span>Sign Out</span>
                     </button>
