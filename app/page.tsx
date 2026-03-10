@@ -23,7 +23,6 @@ const initialInventory: InventoryItem[] = [
   { id: '3', name: 'Frontal Closure Wig 18"', sku: 'WIG-FCW-18', type: 'wig', quantity: 0, price: 120000, status: 'out-of-stock', warehouse: 'Lagos Main' },
   { id: '4', name: 'Mink Body Wave Bundles', sku: 'BUN-MBW-03', type: 'bundle', quantity: 25, price: 35000, status: 'in-stock', warehouse: 'Lagos Main' },
 ];
-
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('inventory');
   const [items, setItems] = useState<InventoryItem[]>([]); // Start with empty array
@@ -35,6 +34,9 @@ export default function App() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  const lowStockAlerts = items.filter(item => item.quantity <= 5 && item.quantity > 0);
+  const outOfStockAlerts = items.filter(item => item.quantity === 0);
 
   // 1. Create the fetch function
   const fetchInventory = async () => {
@@ -135,6 +137,7 @@ export default function App() {
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         <Topbar
+          alerts={[...lowStockAlerts, ...outOfStockAlerts]}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           showSearch={activeTab === 'inventory'}
@@ -185,7 +188,7 @@ export default function App() {
               </div>
             )}
             {activeTab === 'logs' && <StockLogsView />}
-            {activeTab === 'reports' && <ReportsView items={items} logs={logs} />}
+            {activeTab === 'reports' && <ReportsView items={items} />}
             {activeTab === 'team' && <ManageUsers />}
           </div>
         </div>

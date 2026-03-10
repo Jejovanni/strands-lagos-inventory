@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import { InventoryItem } from '../types';
 import {
     Search,
     Bell,
@@ -12,20 +13,22 @@ import {
 } from 'lucide-react';
 
 interface TopbarProps {
+    alerts: InventoryItem[];
     searchQuery: string;
     setSearchQuery: (s: string) => void;
     showSearch: boolean;
     isProfileOpen: boolean;
     setIsProfileOpen: (val: boolean) => void;
 }
-
 const Topbar = ({
+    alerts,
     searchQuery,
     setSearchQuery,
     showSearch,
     isProfileOpen,
     setIsProfileOpen
 }: TopbarProps) => {
+    const [isNotifyOpen, setIsNotifyOpen] = useState(false);
     return (
         <header className="h-20 border-b border-[#3D2B1F]/10 bg-white/50 backdrop-blur-md flex items-center justify-between px-8 shrink-0 relative z-50">
             {/* Search Bar - Only visible on Inventory Tab */}
@@ -42,10 +45,37 @@ const Topbar = ({
 
             <div className="flex items-center gap-6">
                 {/* Notifications */}
-                <button className="relative p-2 text-[#3D2B1F]/60 hover:text-[#FA8072] transition-colors">
-                    <Bell className="w-6 h-6" />
-                    <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#FA8072] rounded-full border-2 border-white"></span>
-                </button>
+                <div className="relative">
+                    <button
+                        onClick={() => setIsNotifyOpen(!isNotifyOpen)}
+                        className="relative p-2 text-[#3D2B1F]/60 hover:text-[#FA8072] transition-colors"
+                    >
+                        <Bell className="w-6 h-6" />
+                        {alerts.length > 0 && (
+                            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#FA8072] rounded-full border-2 border-white"></span>
+                        )}
+                    </button>
+
+                    {isNotifyOpen && (
+                        <div className="absolute right-0 mt-4 w-80 bg-white rounded-2xl border border-[#3D2B1F]/10 shadow-2xl py-4 z-50">
+                            <p className="px-4 pb-2 text-[10px] uppercase font-bold text-[#3D2B1F]/40 tracking-widest border-b border-[#3D2B1F]/5">Inventory Alerts</p>
+                            <div className="max-h-64 overflow-y-auto">
+                                {alerts.length === 0 ? (
+                                    <p className="p-4 text-xs text-center text-gray-400">All stock levels are healthy.</p>
+                                ) : (
+                                    alerts.map(item => (
+                                        <div key={item.id} className="p-4 border-b border-[#3D2B1F]/5 last:border-0 hover:bg-[#F5F1ED]/30 transition-colors">
+                                            <p className="text-sm font-bold text-[#3D2B1F]">{item.name}</p>
+                                            <p className={`text-[10px] font-bold ${item.quantity === 0 ? 'text-red-500' : 'text-[#FA8072]'}`}>
+                                                {item.quantity === 0 ? 'OUT OF STOCK' : `ONLY ${item.quantity} LEFT`} • {item.warehouse}
+                                            </p>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
 
                 {/* User Profile Trigger */}
                 <div className="relative">
