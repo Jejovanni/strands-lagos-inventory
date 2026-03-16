@@ -18,10 +18,10 @@ import { ActiveTab, InventoryItem, StockLogEntry, FilterType } from '../types';
 
 // --- Initial Data ---
 const initialInventory: InventoryItem[] = [
-  { id: '1', name: 'Brazilian Silk Straight', sku: 'WIG-BS-001', type: 'wig', quantity: 12, price: 85000, status: 'in-stock', warehouse: 'Lagos Main' },
-  { id: '2', name: 'Peruvian Deep Wave 14"', sku: 'BUN-PDW-14', type: 'bundle', quantity: 3, price: 45000, status: 'low-stock', warehouse: 'Ike Branch' },
-  { id: '3', name: 'Frontal Closure Wig 18"', sku: 'WIG-FCW-18', type: 'wig', quantity: 0, price: 120000, status: 'out-of-stock', warehouse: 'Lagos Main' },
-  { id: '4', name: 'Mink Body Wave Bundles', sku: 'BUN-MBW-03', type: 'bundle', quantity: 25, price: 35000, status: 'in-stock', warehouse: 'Lagos Main' },
+  { id: '1', name: 'Brazilian Silk Straight', sku: 'WIG-BS-001', type: 'wig', quantity: 12, price: 85000, status: 'in-stock', warehouse: 'Novare Store' },
+  { id: '2', name: 'Peruvian Deep Wave 14"', sku: 'BUN-PDW-14', type: 'bundle', quantity: 3, price: 45000, status: 'low-stock', warehouse: 'Pearl Garden Main' },
+  { id: '3', name: 'Frontal Closure Wig 18"', sku: 'WIG-FCW-18', type: 'wig', quantity: 0, price: 120000, status: 'out-of-stock', warehouse: 'Novare Store' },
+  { id: '4', name: 'Mink Body Wave Bundles', sku: 'BUN-MBW-03', type: 'bundle', quantity: 25, price: 35000, status: 'in-stock', warehouse: 'Novare Store' },
 ];
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('inventory');
@@ -30,7 +30,7 @@ export default function App() {
   const [logs] = useState<StockLogEntry[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
-  const [filterLocation, setFilterLocation] = useState<'all' | 'Lagos Main' | 'Ike Branch'>('all');
+  const [filterLocation, setFilterLocation] = useState<'all' | 'Novare Store' | 'Pearl Garden Main'>('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -170,8 +170,8 @@ export default function App() {
                         <Building2 className="w-4 h-4 text-[#3D2B1F]/30" />
                         <select value={filterLocation} onChange={(e) => setFilterLocation(e.target.value as any)} className="text-xs font-bold outline-none bg-transparent">
                           <option value="all">All Locations</option>
-                          <option value="Lagos Main">Lagos Main</option>
-                          <option value="Ike Branch">Ike Branch</option>
+                          <option value="Novare Store">Novare Store</option>
+                          <option value="Pearl Garden Main">Pearl Garden Main</option>
                         </select>
                       </div>
                       <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-[#3D2B1F]/10 shadow-sm">

@@ -10,7 +10,7 @@ export type InventoryItem = {
     quantity: number;
     price: number;
     status: 'in-stock' | 'low-stock' | 'out-of-stock';
-    warehouse: 'Lagos Main' | 'Ike Branch';
+    warehouse: 'Novare Store' | 'Pearl Garden Main';
 };
 
 export type StockLogEntry = {

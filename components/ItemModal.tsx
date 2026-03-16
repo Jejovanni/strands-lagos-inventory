@@ -52,7 +52,7 @@ const ItemModal = ({ isOpen, onClose, onSave, initialData }: ItemModalProps) => 
         type: 'wig' as 'wig' | 'bundle',
         quantity: 0,
         price: 0,
-        warehouse: 'Lagos Main' as 'Lagos Main' | 'Ike Branch',
+        warehouse: 'Novare Store' as 'Novare Store' | 'Pearl Garden Main',
         logReason: ''
     });
 
@@ -71,7 +71,7 @@ const ItemModal = ({ isOpen, onClose, onSave, initialData }: ItemModalProps) => 
             });
             setIsSkuDirty(true);
         } else if (isOpen) {
-            setFormData({ name: '', sku: '', type: 'wig', quantity: 0, price: 0, warehouse: 'Lagos Main', logReason: '' });
+            setFormData({ name: '', sku: '', type: 'wig', quantity: 0, price: 0, warehouse: 'Novare Store', logReason: '' });
             setIsSkuDirty(false);
         }
     }, [initialData, isOpen]);
@@ -148,8 +148,8 @@ const ItemModal = ({ isOpen, onClose, onSave, initialData }: ItemModalProps) => 
                                 onChange={e => setFormData({ ...formData, warehouse: e.target.value as any })}
                                 className="w-full p-3 rounded-xl border border-[#3D2B1F]/10 outline-none bg-white"
                             >
-                                <option value="Lagos Main">Lagos Main</option>
-                                <option value="Ike Branch">Ike Branch</option>
+                                <option value="Novare Store">Novare Store</option>
+                                <option value="Pearl Garden Main">Pearl Garden Main</option>
                             </select>
                         </div>
                         <div>
