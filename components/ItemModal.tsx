@@ -167,10 +167,15 @@ const ItemModal = ({ isOpen, onClose, onSave, initialData }: ItemModalProps) => 
                     <div>
                         <label className="block text-xs font-bold text-[#3D2B1F]/60 uppercase mb-1">Selling Price (₦)</label>
                         <input
-                            type="number"
+                            type="text"
                             required
-                            value={formData.price}
-                            onChange={e => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
+                            value={formData.price === 0 ? '' : formData.price.toLocaleString()}
+                            onChange={e => {
+                                const val = e.target.value.replace(/,/g, '');
+                                if (val === '' || /^\d+$/.test(val)) {
+                                    setFormData({ ...formData, price: parseInt(val) || 0 });
+                                }
+                            }}
                             className="w-full p-3 rounded-xl border border-[#3D2B1F]/10 focus:ring-2 focus:ring-[#FA8072]/20 outline-none"
                         />
                     </div>
