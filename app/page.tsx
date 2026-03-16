@@ -84,23 +84,18 @@ export default function App() {
   }, [searchQuery, filterType, filterLocation]);
 
   const handleSaveItem = async (data: Partial<InventoryItem> & { logReason?: string }) => {
+    const { logReason, ...productData } = data;
+
     if (editingItem) {
       // 1. Set the reason in the database session first
-      if (data.logReason) {
-        await supabase.rpc('set_log_reason', { reason: data.logReason });
+      if (logReason) {
+        await supabase.rpc('set_log_reason', { reason: logReason });
       }
 
       // 2. Perform the actual update
       const { error } = await supabase
         .from('products')
-        .update({
-          name: data.name,
-          sku: data.sku,
-          type: data.type,
-          quantity: data.quantity,
-          price: data.price,
-          warehouse: data.warehouse
-        })
+        .update(productData)
         .eq('id', editingItem.id);
 
       if (!error) {
@@ -112,8 +107,8 @@ export default function App() {
       const { error } = await supabase
         .from('products')
         .insert([{
-          ...data,
-          status: (data.quantity || 0) > 5 ? 'in-stock' : 'low-stock'
+          ...productData,
+          status: (productData.quantity || 0) > 5 ? 'in-stock' : 'low-stock'
         }]);
 
       if (!error) {
