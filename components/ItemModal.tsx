@@ -11,6 +11,40 @@ interface ItemModalProps {
     initialData?: InventoryItem;
 }
 
+const generateSKU = (name: string): string => {
+    if (!name) return '';
+    const words = name.toUpperCase().split(/\s+/).filter(Boolean);
+    
+    let textWords: string[] = [];
+    let numbers = '';
+    
+    words.forEach(word => {
+        const numMatch = word.match(/\d+/g);
+        if (numMatch) {
+            numbers += numMatch.join('');
+        }
+        const textMatch = word.replace(/[^A-Z]/g, '');
+        if (textMatch) {
+            textWords.push(textMatch);
+        }
+    });
+
+    let part1 = textWords.length > 0 ? textWords[0].substring(0, 3) : '';
+    let part2 = textWords.length > 1 ? textWords.slice(1).map(w => w[0]).join('') : '';
+    
+    const maxNumbers = numbers.length > 0 ? Math.min(numbers.length, 2) : 0;
+    let availableForPart2 = 7 - part1.length - maxNumbers;
+    if (availableForPart2 < 0) availableForPart2 = 0;
+    
+    part2 = part2.substring(0, availableForPart2);
+    
+    let availableForNumbers = 7 - part1.length - part2.length;
+    numbers = numbers.substring(0, availableForNumbers);
+    
+    const parts = [part1, part2, numbers].filter(Boolean);
+    return parts.join('-');
+};
+
 const ItemModal = ({ isOpen, onClose, onSave, initialData }: ItemModalProps) => {
     const [formData, setFormData] = useState({
         name: '',
@@ -21,6 +55,8 @@ const ItemModal = ({ isOpen, onClose, onSave, initialData }: ItemModalProps) => 
         warehouse: 'Lagos Main' as 'Lagos Main' | 'Ike Branch',
         logReason: ''
     });
+
+    const [isSkuDirty, setIsSkuDirty] = useState(false);
 
     useEffect(() => {
         if (initialData && isOpen) {
@@ -33,8 +69,10 @@ const ItemModal = ({ isOpen, onClose, onSave, initialData }: ItemModalProps) => 
                 warehouse: initialData.warehouse,
                 logReason: ''
             });
+            setIsSkuDirty(true);
         } else if (isOpen) {
             setFormData({ name: '', sku: '', type: 'wig', quantity: 0, price: 0, warehouse: 'Lagos Main', logReason: '' });
+            setIsSkuDirty(false);
         }
     }, [initialData, isOpen]);
 
@@ -64,7 +102,14 @@ const ItemModal = ({ isOpen, onClose, onSave, initialData }: ItemModalProps) => 
                         <input
                             required
                             value={formData.name}
-                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                            onChange={e => {
+                                const newName = e.target.value;
+                                setFormData(prev => ({
+                                    ...prev,
+                                    name: newName,
+                                    ...(!isSkuDirty ? { sku: generateSKU(newName) } : {})
+                                }));
+                            }}
                             className="w-full p-3 rounded-xl border border-[#3D2B1F]/10 focus:ring-2 focus:ring-[#FA8072]/20 outline-none transition-all"
                         />
                     </div>
@@ -75,7 +120,10 @@ const ItemModal = ({ isOpen, onClose, onSave, initialData }: ItemModalProps) => 
                             <input
                                 required
                                 value={formData.sku}
-                                onChange={e => setFormData({ ...formData, sku: e.target.value })}
+                                onChange={e => {
+                                    setFormData(prev => ({ ...prev, sku: e.target.value.toUpperCase() }));
+                                    setIsSkuDirty(true);
+                                }}
                                 className="w-full p-3 rounded-xl border border-[#3D2B1F]/10 focus:ring-2 focus:ring-[#FA8072]/20 outline-none transition-all"
                             />
                         </div>
