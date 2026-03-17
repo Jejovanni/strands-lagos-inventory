@@ -1,126 +1,118 @@
 'use client';
 
-import React, { useState } from 'react';
-import { InventoryItem } from '../types';
-import {
-    Search,
-    Bell,
-    UserCircle2,
-    User,
-    MapPin,
-    Lock,
-    LogOut
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { Bell, LogOut, User as UserIcon, Package } from 'lucide-react';
+import { User } from '@supabase/supabase-js';
 
 interface TopbarProps {
-    alerts: InventoryItem[];
+    alerts: any[];
     searchQuery: string;
-    setSearchQuery: (s: string) => void;
+    setSearchQuery: (val: string) => void;
     showSearch: boolean;
     isProfileOpen: boolean;
     setIsProfileOpen: (val: boolean) => void;
 }
-const Topbar = ({
-    alerts,
-    searchQuery,
-    setSearchQuery,
-    showSearch,
-    isProfileOpen,
-    setIsProfileOpen
-}: TopbarProps) => {
-    const [isNotifyOpen, setIsNotifyOpen] = useState(false);
+
+const Topbar = ({ alerts, searchQuery, setSearchQuery, showSearch, isProfileOpen, setIsProfileOpen }: TopbarProps) => {
+    const [user, setUser] = useState<User | null>(null);
+    const [isAlertsOpen, setIsAlertsOpen] = useState(false); // NEW STATE FOR BELL
+
+    useEffect(() => {
+        supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
+    }, []);
+
+    const handleSignOut = async () => {
+        await supabase.auth.signOut();
+        window.location.href = '/login';
+    };
+
     return (
-        <header className="h-20 border-b border-[#3D2B1F]/10 bg-white/50 backdrop-blur-md flex items-center justify-between px-8 shrink-0 relative z-50">
-            {/* Search Bar - Only visible on Inventory Tab */}
-            <div className={`relative w-96 transition-all duration-300 ${showSearch ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}`}>
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#3D2B1F]/40" />
-                <input
-                    type="text"
-                    placeholder="Search items or SKU..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#3D2B1F]/10 bg-white/80 focus:outline-none focus:ring-2 focus:ring-[#FA8072]/50 focus:border-[#FA8072] transition-all shadow-sm text-sm"
-                />
+        <header className="bg-white border-b border-[#3D2B1F]/10 px-8 py-4 flex items-center justify-between">
+            <div className="flex-1 max-w-md">
+                {showSearch && (
+                    <input
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search inventory..."
+                        className="w-full bg-[#F5F1ED] border-none rounded-xl px-4 py-2 focus:ring-2 focus:ring-[#3D2B1F]/20"
+                    />
+                )}
             </div>
 
-            <div className="flex items-center gap-6">
-                {/* Notifications */}
+            <div className="flex items-center gap-4">
+                {/* NOTIFICATION BELL SECTION */}
                 <div className="relative">
                     <button
-                        onClick={() => setIsNotifyOpen(!isNotifyOpen)}
-                        className="relative p-2 text-[#3D2B1F]/60 hover:text-[#FA8072] transition-colors"
+                        onClick={() => {
+                            setIsAlertsOpen(!isAlertsOpen);
+                            setIsProfileOpen(false); // Close profile if bell is clicked
+                        }}
+                        className="p-2.5 rounded-xl bg-[#F5F1ED] text-[#3D2B1F]/60 hover:bg-[#3D2B1F] hover:text-[#F5F1ED] transition-all relative"
                     >
-                        <Bell className="w-6 h-6" />
+                        <Bell className="w-5 h-5" />
                         {alerts.length > 0 && (
-                            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#FA8072] rounded-full border-2 border-white"></span>
+                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#FA8072] text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
+                                {alerts.length}
+                            </span>
                         )}
                     </button>
 
-                    {isNotifyOpen && (
-                        <div className="absolute right-0 mt-4 w-80 bg-white rounded-2xl border border-[#3D2B1F]/10 shadow-2xl py-4 z-50">
-                            <p className="px-4 pb-2 text-[10px] uppercase font-bold text-[#3D2B1F]/40 tracking-widest border-b border-[#3D2B1F]/5">Inventory Alerts</p>
+                    {/* ALERTS DROPDOWN */}
+                    {isAlertsOpen && (
+                        <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-[#3D2B1F]/10 py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+                            <div className="px-4 py-3 border-b border-[#3D2B1F]/5">
+                                <h3 className="text-xs font-bold text-[#3D2B1F]/40 uppercase tracking-widest">Inventory Alerts</h3>
+                            </div>
                             <div className="max-h-64 overflow-y-auto">
-                                {alerts.length === 0 ? (
-                                    <p className="p-4 text-xs text-center text-gray-400">All stock levels are healthy.</p>
-                                ) : (
-                                    alerts.map(item => (
-                                        <div key={item.id} className="p-4 border-b border-[#3D2B1F]/5 last:border-0 hover:bg-[#F5F1ED]/30 transition-colors">
+                                {alerts.length > 0 ? (
+                                    alerts.map((item) => (
+                                        <div key={item.id} className="px-4 py-3 hover:bg-[#F5F1ED]/50 transition-colors border-b border-[#3D2B1F]/5 last:border-0">
                                             <p className="text-sm font-bold text-[#3D2B1F]">{item.name}</p>
-                                            <p className={`text-[10px] font-bold ${item.quantity === 0 ? 'text-red-500' : 'text-[#FA8072]'}`}>
-                                                {item.quantity === 0 ? 'OUT OF STOCK' : `ONLY ${item.quantity} LEFT`} • {item.warehouse}
+                                            <p className="text-[10px] font-bold text-red-500 uppercase mt-0.5">
+                                                ONLY {item.quantity} LEFT • {item.warehouse}
                                             </p>
                                         </div>
                                     ))
+                                ) : (
+                                    <div className="px-4 py-8 text-center">
+                                        <Package className="w-8 h-8 text-[#3D2B1F]/10 mx-auto mb-2" />
+                                        <p className="text-sm text-[#3D2B1F]/40">All stock levels healthy</p>
+                                    </div>
                                 )}
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* User Profile Trigger */}
+                {/* PROFILE SECTION */}
                 <div className="relative">
                     <button
-                        onClick={() => setIsProfileOpen(!isProfileOpen)}
-                        className={`flex items-center gap-3 pl-6 border-l border-[#3D2B1F]/10 transition-all hover:opacity-80 ${isProfileOpen ? 'opacity-50' : ''}`}
+                        onClick={() => {
+                            setIsProfileOpen(!isProfileOpen);
+                            setIsAlertsOpen(false); // Close alerts if profile is clicked
+                        }}
+                        className="flex items-center gap-3 p-1 pr-4 rounded-full bg-[#F5F1ED] hover:bg-[#F5F1ED]/80 transition-all"
                     >
-                        <div className="text-right hidden sm:block">
-                            <p className="text-sm font-bold text-[#3D2B1F]">Admin User</p>
-                            <p className="text-[10px] uppercase tracking-tighter text-[#3D2B1F]/40 font-bold">Strands Lagos HQ</p>
+                        <div className="w-8 h-8 rounded-full bg-[#3D2B1F] flex items-center justify-center text-[#F5F1ED]">
+                            <UserIcon className="w-4 h-4" />
                         </div>
-                        <div className="relative">
-                            <UserCircle2 className="w-10 h-10 text-[#3D2B1F]/20" />
-                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-                        </div>
+                        <span className="text-sm font-bold text-[#3D2B1F]">Admin</span>
                     </button>
 
-                    {/* Profile Dropdown Menu */}
                     {isProfileOpen && (
-                        <>
-                            <div className="fixed inset-0 z-[-1]" onClick={() => setIsProfileOpen(false)}></div>
-                            <div className="absolute right-0 mt-4 w-64 bg-white rounded-2xl border border-[#3D2B1F]/10 shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                                <div className="px-4 py-3 border-b border-[#3D2B1F]/5 mb-2">
-                                    <p className="text-xs font-bold text-[#3D2B1F]/40 uppercase tracking-widest mb-1">Account</p>
-                                    <p className="text-sm font-bold text-[#3D2B1F]">admin@strandslagos.com</p>
-                                </div>
-                                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#3D2B1F]/70 hover:bg-[#F5F1ED] hover:text-[#3D2B1F] transition-colors group">
-                                    <User className="w-4 h-4 text-[#3D2B1F]/30 group-hover:text-[#FA8072]" />
-                                    <span>My Profile</span>
-                                </button>
-                                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#3D2B1F]/70 hover:bg-[#F5F1ED] hover:text-[#3D2B1F] transition-colors group">
-                                    <MapPin className="w-4 h-4 text-[#3D2B1F]/30 group-hover:text-[#FA8072]" />
-                                    <span>Store Locations</span>
-                                </button>
-                                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#3D2B1F]/70 hover:bg-[#F5F1ED] hover:text-[#3D2B1F] transition-colors group">
-                                    <Lock className="w-4 h-4 text-[#3D2B1F]/30 group-hover:text-[#FA8072]" />
-                                    <span>Password & Security</span>
-                                </button>
-                                <div className="h-px bg-[#3D2B1F]/5 my-2"></div>
-                                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors group font-bold">
+                        <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#3D2B1F]/10 py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+                            <div className="px-4 py-3 border-b border-[#3D2B1F]/5">
+                                <p className="text-xs text-[#3D2B1F]/40 uppercase tracking-widest font-bold">Logged in as</p>
+                                <p className="text-sm font-bold text-[#3D2B1F] truncate">{user?.email || 'Loading...'}</p>
+                            </div>
+                            <div className="p-2">
+                                <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors">
                                     <LogOut className="w-4 h-4" />
-                                    <span>Sign Out</span>
+                                    Sign Out
                                 </button>
                             </div>
-                        </>
+                        </div>
                     )}
                 </div>
             </div>
