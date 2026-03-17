@@ -84,37 +84,47 @@ export default function App() {
   }, [searchQuery, filterType, filterLocation]);
 
   const handleSaveItem = async (data: Partial<InventoryItem> & { logReason?: string }) => {
-    const { logReason, ...productData } = data;
+    // 1. Destructure to extract non-database fields
+    // We pull 'id' out because we don't want to try and 'update' or 'insert' the ID manually 
+    // if Postgres is handling it, or if it's a frontend placeholder.
+    const { logReason, id, status, ...productData } = data;
 
-    if (editingItem) {
-      // 1. Set the reason in the database session first
-      if (logReason) {
-        await supabase.rpc('set_log_reason', { reason: logReason });
+    try {
+      if (editingItem) {
+        // 2. Set the audit log reason
+        if (logReason) {
+          await supabase.rpc('set_log_reason', { reason: logReason });
+        }
+
+        // 3. Update the existing item
+        const { error } = await supabase
+          .from('products')
+          .update(productData)
+          .eq('id', editingItem.id);
+
+        if (error) throw error;
+      } else {
+        // 4. Insert New Item (Crucial: Added 'await')
+        const { error } = await supabase
+          .from('products')
+          .insert([{
+            ...productData,
+            // Calculate status based on current quantity
+            quantity: productData.quantity || 0,
+          }]);
+
+        if (error) throw error;
       }
 
-      // 2. Perform the actual update
-      const { error } = await supabase
-        .from('products')
-        .update(productData)
-        .eq('id', editingItem.id);
+      // Success Actions
+      await fetchInventory(); // Re-fetch from DB
+      setIsAddModalOpen(false);
+      setEditingItem(null);
 
-      if (!error) {
-        fetchInventory();
-        setEditingItem(null);
-      }
-    } else {
-      // Logic for New Item (Insertion)
-      const { error } = await supabase
-        .from('products')
-        .insert([{
-          ...productData,
-          status: (productData.quantity || 0) > 5 ? 'in-stock' : 'low-stock'
-        }]);
-
-      if (!error) {
-        fetchInventory();
-        setIsAddModalOpen(false);
-      }
+    } catch (error: any) {
+      // THIS WILL TELL US THE TRUTH IN THE CONSOLE
+      console.error('STRANDS LAGOS DATABASE ERROR:', error.message, error.details);
+      alert(`Database Error: ${error.message}`);
     }
   };
 
