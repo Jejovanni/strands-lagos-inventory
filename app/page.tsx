@@ -25,7 +25,7 @@ const initialInventory: InventoryItem[] = [
 ];
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('inventory');
-  const [items, setItems] = useState<InventoryItem[]>([]); // Start with empty array
+  const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [logs] = useState<StockLogEntry[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -84,47 +84,40 @@ export default function App() {
   }, [searchQuery, filterType, filterLocation]);
 
   const handleSaveItem = async (data: Partial<InventoryItem> & { logReason?: string }) => {
-    // 1. Destructure to extract non-database fields
-    // We pull 'id' out because we don't want to try and 'update' or 'insert' the ID manually 
-    // if Postgres is handling it, or if it's a frontend placeholder.
     const { logReason, id, status, ...productData } = data;
 
     try {
       if (editingItem) {
-        // 2. Set the audit log reason
-        if (logReason) {
-          await supabase.rpc('set_log_reason', { reason: logReason });
-        }
-
-        // 3. Update the existing item
-        const { error } = await supabase
-          .from('products')
-          .update(productData)
-          .eq('id', editingItem.id);
+        // Direct call to our new database function
+        const { error } = await supabase.rpc('update_inventory_item', {
+          p_id: editingItem.id,
+          p_name: productData.name,
+          p_sku: productData.sku,
+          p_type: productData.type,
+          p_quantity: Number(productData.quantity),
+          p_price: Number(productData.price),
+          p_warehouse: productData.warehouse,
+          p_reason: logReason || 'Manual Adjustment'
+        });
 
         if (error) throw error;
       } else {
-        // 4. Insert New Item (Crucial: Added 'await')
+        // New items are still handled by the simple insert + trigger
         const { error } = await supabase
           .from('products')
           .insert([{
             ...productData,
-            // Calculate status based on current quantity
-            quantity: productData.quantity || 0,
+            quantity: Number(productData.quantity) || 0
           }]);
-
         if (error) throw error;
       }
 
-      // Success Actions
-      await fetchInventory(); // Re-fetch from DB
+      await fetchInventory();
       setIsAddModalOpen(false);
       setEditingItem(null);
-
     } catch (error: any) {
-      // THIS WILL TELL US THE TRUTH IN THE CONSOLE
-      console.error('STRANDS LAGOS DATABASE ERROR:', error.message, error.details);
-      alert(`Database Error: ${error.message}`);
+      console.error('Strands Lagos Save Error:', error.message);
+      alert(`Error: ${error.message}`);
     }
   };
 

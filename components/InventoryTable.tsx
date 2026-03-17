@@ -4,6 +4,24 @@ import React from 'react';
 import { Package, MapPin, Edit2, AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import { InventoryItem } from '../types';
 
+const formatCurrency = (amount: number): string => {
+  if (amount >= 1_000_000_000) {
+    // For Billions (B)
+    return `₦${(amount / 1_000_000_000).toLocaleString(undefined, {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
+    })}B`;
+  } else if (amount >= 1_000_000) {
+    // For Millions (M)
+    return `₦${(amount / 1_000_000).toLocaleString(undefined, {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
+    })}M`;
+  }
+  // Standard format for anything under a Million
+  return `₦${amount.toLocaleString()}`;
+};
+
 interface InventoryTableProps {
   items: InventoryItem[];
   onEdit: (item: InventoryItem) => void;
@@ -43,7 +61,9 @@ const InventoryTable = ({ items, onEdit }: InventoryTableProps) => {
                 </td>
                 <td className="px-8 py-5 text-sm font-mono text-[#3D2B1F]/60 tracking-tighter">{item.sku}</td>
                 <td className="px-8 py-5 text-right font-bold text-lg font-serif">{item.quantity}</td>
-                <td className="px-8 py-5 text-sm font-bold font-serif">₦{item.price.toLocaleString()}</td>
+                <td className="px-8 py-5 text-sm font-bold font-serif">
+                  {formatCurrency(item.price)}
+                </td>
                 <td className="px-8 py-5">
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${item.quantity === 0 ? 'bg-red-50 text-red-600' :
                       item.quantity <= 5 ? 'bg-[#FA8072]/10 text-[#FA8072]' :

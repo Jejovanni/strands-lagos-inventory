@@ -7,6 +7,22 @@ interface StatsOverviewProps {
     items: InventoryItem[];
 }
 
+// 1. Define the helper function at the top
+const formatCurrency = (amount: number): string => {
+    if (amount >= 1_000_000_000) {
+        return `₦${(amount / 1_000_000_000).toLocaleString(undefined, {
+            minimumFractionDigits: 3,
+            maximumFractionDigits: 3,
+        })}B`;
+    } else if (amount >= 1_000_000) {
+        return `₦${(amount / 1_000_000).toLocaleString(undefined, {
+            minimumFractionDigits: 3,
+            maximumFractionDigits: 3,
+        })}M`;
+    }
+    return `₦${amount.toLocaleString()}`;
+};
+
 const StatsOverview = ({ items }: StatsOverviewProps) => {
     const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
     const lowStockItems = items.filter(item => item.quantity > 0 && item.quantity <= 5).length;
@@ -16,7 +32,8 @@ const StatsOverview = ({ items }: StatsOverviewProps) => {
     const stats = [
         { label: 'Units in Stock', value: totalItems, color: 'bg-[#FA8072]/10' },
         { label: 'Total Wigs', value: totalWigs, color: 'bg-[#3D2B1F]/5' },
-        { label: 'Inventory Value', value: `₦${(totalValue / 1000).toFixed(0)}k`, color: 'bg-[#3D2B1F]/5' },
+        // 2. APPLY THE CHANGE HERE: Swapping the manual 'k' logic for the helper
+        { label: 'Inventory Value', value: formatCurrency(totalValue), color: 'bg-[#3D2B1F]/5' },
         { label: 'Low Stock', value: lowStockItems, color: 'bg-red-500/10', alert: lowStockItems > 0 },
     ];
 
