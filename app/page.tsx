@@ -129,6 +129,41 @@ export default function App() {
     return matchesSearch && matchesType && matchesLocation;
   });
 
+  const handleExportCSV = () => {
+    if (items.length === 0) return;
+
+    // 1. Define headers
+    const headers = ["Name", "SKU", "Type", "Quantity", "Price", "Warehouse", "Status"];
+
+    // 2. Map data to rows
+    const rows = items.map(item => [
+      `"${item.name}"`, // Wrap in quotes to handle commas in names
+      `"${item.sku}"`,
+      item.type,
+      item.quantity,
+      item.price,
+      item.warehouse,
+      item.quantity <= 5 ? "Low Stock" : "In Stock"
+    ]);
+
+    // 3. Combine into CSV string
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.join(","))
+    ].join("\n");
+
+    // 4. Create download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Strands_Lagos_Inventory_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="flex w-full min-h-screen bg-[#F5F1ED] overflow-hidden text-[#3D2B1F]">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
@@ -153,7 +188,7 @@ export default function App() {
                     <p className="text-[#3D2B1F]/60">Monitor and manage hair stock across Strands Lagos locations.</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 bg-white border border-[#3D2B1F]/10 text-[#3D2B1F] px-5 py-3 rounded-xl text-sm font-bold shadow-sm hover:bg-[#F5F1ED] transition-all"><Download className="w-4 h-4" /> Export CSV</button>
+                    <button onClick={handleExportCSV} className="flex items-center gap-2 bg-white border border-[#3D2B1F]/10 text-[#3D2B1F] px-5 py-3 rounded-xl text-sm font-bold shadow-sm hover:bg-[#F5F1ED] transition-all"><Download className="w-4 h-4" /> Export CSV</button>
                     <button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 bg-[#3D2B1F] text-[#F5F1ED] px-6 py-3 rounded-xl font-medium shadow-lg hover:bg-[#3D2B1F]/90 transition-all"><Plus className="w-5 h-5" /> Add Item</button>
                   </div>
                 </div>
